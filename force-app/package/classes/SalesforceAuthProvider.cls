@@ -44,6 +44,7 @@ public with sharing class SalesforceAuthProvider extends Auth.AuthProviderPlugin
     @TestVisible private final static String ENABLE_PER_USER_MODE_FIELD_NAME = String.valueOf(SalesforceAuthProvider__mdt.Enable_Per_User_Mode__c);
     @TestVisible private final static String ENABLE_ERROR_LOGGING_FIELD_NAME = String.valueOf(SalesforceAuthProvider__mdt.Enable_Error_Logging__c);
     @TestVisible private final static String ENABLE_LOGIN_LOGGING_FIELD_NAME = String.valueOf(SalesforceAuthProvider__mdt.Enable_Per_User_Login_Logging__c);
+    @TestVisible private final static String ENABLE_LOGIN_HISTORY_FIELD_NAME = String.valueOf(SalesforceAuthProvider__mdt.Enable_Login_History__c);
 
     // This will generate the GUID that is used to identify this specific transaction so it can be followed through the logs
     @TestVisible private final static String GUID = utl.Rst.guid();
@@ -103,7 +104,6 @@ public with sharing class SalesforceAuthProvider extends Auth.AuthProviderPlugin
      *              just ignore this value or put in a random, invalid value.
      */
     public Auth.AuthProviderTokenResponse handleCallback(Map<String,String> authProviderConfiguration, Auth.AuthProviderCallbackState callbackState){
-       
         try{
             // Check if the "per user" principal is enabled and if so set the logged in user Id
             if(Boolean.valueOf(authProviderConfiguration.get(ENABLE_PER_USER_MODE_FIELD_NAME))){
@@ -113,11 +113,22 @@ public with sharing class SalesforceAuthProvider extends Auth.AuthProviderPlugin
             // Retrieve a new token from the token endpoint
             TokenResponse sfTokenResponse = this.retrieveSalesforceToken(authProviderConfiguration);
 
-            // Return the the token response, there is no refresh token so we just set a random value
+            // If login history is enabled, create a login history entry
+            if(Boolean.valueOf(authProviderConfiguration.get(ENABLE_LOGIN_HISTORY_FIELD_NAME))){
+                getAuthProviderUtil().call('insertLoginHistoryRecord', new Map<String, Object> { 
+                    'authProviderName' => authProviderConfiguration.get(AUTH_PROVIDER_NAME_FIELD_NAME)?.trim(),
+                    'userId'           => loggedInUserId,
+                    'flowType'         => 'Initial', // Initial or Refresh 
+                    'timestamp'        => Datetime.now()
+                });
+            }
+
+            // In the per user authorization we need to abuse the user id as refresh token so that
+            // a new token can be retrieved in the correct user context
             return new Auth.AuthProviderTokenResponse(
                 authProviderConfiguration.get(AUTH_PROVIDER_NAME_FIELD_NAME)?.trim(),
                 sfTokenResponse.access_token,
-                'NoRefreshTokenInThisOAuthFlow',
+                loggedInUserId,
                 callbackState.queryParameters.get(PARAM_NAME_STATE)
             ); 
         }catch(Exception e){
@@ -134,16 +145,44 @@ public with sharing class SalesforceAuthProvider extends Auth.AuthProviderPlugin
      * @param       authProviderConfiguration The configuration items for the custom authentication
      *                                        provider that have been configured in the custom metadata
      *                                        type.
-     * @param       refreshToken              The refresh token for the user who is logged in.
+     * @param       refreshToken              The userId for per user configuration or null for named principal
      * @return      Returns the new access token, or an error message if an error occurs.
-     * @note        There is no refresh token in the OAUth 2.0 JWT Client Authentication flow so we
-     *              just ignore this value or put in a random, invalid value.
+     * @note        There is no refresh token in the Salesforce JWT flow, so I am going to abuse the refreshToken
+     *              param to store the matching user Id
      */
     public override Auth.OAuthRefreshResult refresh(Map<String,String> authProviderConfiguration, String refreshToken){
-        return new Auth.OAuthRefreshResult(
-            'NO_RF_TOKEN',
-            null
-        );
+        try{
+            // Check if the "per user" principal is enabled and if so set the logged in user Id
+            // This way the correct user is
+            if(Boolean.valueOf(authProviderConfiguration.get(ENABLE_PER_USER_MODE_FIELD_NAME))){
+                loggedInUserId = refreshToken;
+            }
+
+            // Retrieve a new token from the token endpoint
+            TokenResponse sfTokenResponse = this.retrieveSalesforceToken(authProviderConfiguration);
+
+            // If login history is enabled, create a login history entry
+            if(Boolean.valueOf(authProviderConfiguration.get(ENABLE_LOGIN_HISTORY_FIELD_NAME))){
+                getAuthProviderUtil().call('insertLoginHistoryRecord', new Map<String, Object> { 
+                    'authProviderName' => authProviderConfiguration.get(AUTH_PROVIDER_NAME_FIELD_NAME)?.trim(),
+                    'userId'           => loggedInUserId,
+                    'flowType'         => 'Refresh',
+                    'timestamp'        => Datetime.now()
+                });
+            }
+            
+            // Create a new refresh token
+            return new Auth.OAuthRefreshResult(
+                sfTokenResponse.access_token,
+                refreshToken
+            );
+
+        }catch(Exception e){
+            handleException(e, authProviderConfiguration);
+        }
+
+        // Unreachable statement to please the apex compiler
+        return null;
     }
 
 

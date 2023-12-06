@@ -15,8 +15,7 @@ package.xml
 **/certs**/
 **/objectTranslations/**
 **/profiles/**
-
-
+**/dataSources/**
 **/authproviders/**
 **/externalCredentials/**
 **/namedCredentials/**

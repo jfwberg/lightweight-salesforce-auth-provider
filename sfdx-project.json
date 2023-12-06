@@ -1,47 +1,51 @@
 {
-    "packageDirectories": [
+  "packageDirectories": [
+    {
+      "path": "force-app/package",
+      "default": true,
+      "package": "Lightweight - Salesforce Auth Provider",
+      "versionName": "v59.0 - 0.1",
+      "versionNumber": "0.1.0.NEXT",
+      "versionDescription": "A lightweight Auth Provider to connect to external Salesforce through a Named Credentials or External Data Sources / External Objects / Cross Org Adapter.",
+      "ancestorId": "04tP30000007FvBIAU",
+      "dependencies": [
         {
-            "path": "force-app/package",
-            "default": true,
-            "package": "Lightweight - Salesforce Auth Provider",
-            "versionName": "v59.0 - 0.1",
-            "versionNumber": "0.1.0.NEXT",
-            "versionDescription": "A lightweight Auth Provider to connect to a Salesforce Org using a Named Credential or External Data Source.",
-            "ancestorId": "04tP30000007FvBIAU",
-            "dependencies": [
-                {
-                    "package": "Lightweight - Apex Unit Test Util v2@2.3.0-1"
-                },
-                {
-                    "package": "Lightweight - REST Util@0.10.0-1"
-                }
-            ]
+          "package": "Lightweight - Apex Unit Test Util v2@2.3.0-1"
         },
         {
-            "path": "force-app/package",
-            "default": false,
-            "package": "Lightweight - Salesforce Auth Provider (Unlocked)",
-            "versionName": "v59.0 - 0.1",
-            "versionNumber": "0.1.0.NEXT",
-            "versionDescription": "A lightweight Auth Provider to connect to a Salesforce Org using a Named Credential or External Data Source.",
-            "dependencies": [
-                {
-                    "package": "Lightweight - Apex Unit Test Util v2 (Unlocked)@2.3.0-1"
-                },
-                {
-                    "package": "Lightweight - REST Util (Unlocked)@0.10.0-1"
-                }
-            ]
+          "package": "Lightweight - REST Util@0.10.0-1"
         }
-    ],
-    "name": "lightweight-salesforce-auth-provider",
-    "namespace": "lwt",
-    "sfdcLoginUrl": "https://login.salesforce.com",
-    "sourceApiVersion": "59.0",
-    "packageAliases": {
-        "Lightweight - Apex Unit Test Util v2@2.3.0-1": "04tP30000007oePIAQ",
-        "Lightweight - Apex Unit Test Util v2 (Unlocked)@2.3.0-1": "04tP30000007og1IAA",
-        "Lightweight - REST Util@0.10.0-1": "04tP30000007sN3IAI",
-        "Lightweight - REST Util (Unlocked)@0.10.0-1": "04tP30000007sQHIAY"
+      ]
+    },
+    {
+      "path": "force-app/package",
+      "default": false,
+      "package": "Lightweight - Salesforce Auth Provider (Unlocked)",
+      "versionName": "v59.0 - 0.1",
+      "versionNumber": "0.1.0.NEXT",
+      "versionDescription": "A lightweight Auth Provider to connect to external Salesforce through a Named Credentials or External Data Sources / External Objects / Cross Org Adapter.",
+      "dependencies": [
+        {
+          "package": "Lightweight - Apex Unit Test Util v2 (Unlocked)@2.3.0-1"
+        },
+        {
+          "package": "Lightweight - REST Util (Unlocked)@0.10.0-1"
+        }
+      ]
     }
+  ],
+  "name": "lightweight-salesforce-auth-provider",
+  "namespace": "lwt",
+  "sfdcLoginUrl": "https://login.salesforce.com",
+  "sourceApiVersion": "59.0",
+  "packageAliases": {
+    "Lightweight - Apex Unit Test Util v2@2.3.0-1": "04tP30000007oePIAQ",
+    "Lightweight - Apex Unit Test Util v2 (Unlocked)@2.3.0-1": "04tP30000007og1IAA",
+    "Lightweight - REST Util@0.10.0-1": "04tP30000007sN3IAI",
+    "Lightweight - REST Util (Unlocked)@0.10.0-1": "04tP30000007sQHIAY",
+    "Lightweight - Salesforce Auth Provider": "0HoP300000000KzKAI",
+    "Lightweight - Salesforce Auth Provider@0.1.0-1": "04tP3000000DjXBIA0",
+    "Lightweight - Salesforce Auth Provider (Unlocked)": "0HoP300000000MbKAI",
+    "Lightweight - Salesforce Auth Provider (Unlocked)@0.1.0-1": "04tP3000000DjaPIAS"
+  }
 }

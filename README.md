@@ -29,9 +29,9 @@ This package has an extension that adds a basic (error) logging functionality an
 | Info | Value |
 |---|---|
 |Name|Lightweight - Auth Provider Util v2|
-|Version|0.7.0-1|
-|Managed Installation URL | */packaging/installPackage.apexp?p0=04tP3000000DZxdIAG*
-|Unlocked Installation URL| */packaging/installPackage.apexp?p0=04tP3000000Da0rIAC*
+|Version|0.8.0-1|
+|Managed Installation URL | */packaging/installPackage.apexp?p0=04tP3000000DieLIAS*
+|Unlocked Installation URL| */packaging/installPackage.apexp?p0=04tP3000000Dj5lIAC*
 |GIT URL                  | https://github.com/jfwberg/lightweight-auth-provider-util
 
 ## Package info
@@ -39,8 +39,8 @@ This package has an extension that adds a basic (error) logging functionality an
 |---|---|
 |Name|Lightweight - Salesforce Auth Provider|
 |Version|0.1.0-1|
-|Managed Installation URL | */packaging/installPackage.apexp?p0=xxx*
-|Unlocked Installation URL| */packaging/installPackage.apexp?p0=xxx*
+|Managed Installation URL | */packaging/installPackage.apexp?p0=04tP3000000DjXBIA0*
+|Unlocked Installation URL| */packaging/installPackage.apexp?p0=04tP3000000DjaPIAS*
 
 ## Important
 - Security is no easy subject: Before implementing this (or any) solution, always validate what you're doing with a certified sercurity expert and your certified implementation partner

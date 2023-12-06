@@ -72,6 +72,8 @@ private with sharing class SalesforceAuthProviderTest {
         utl.Clbl.setActionResponse('checkUserMappingExists', true);
         utl.Clbl.setActionResponse('getSubjectFromUserMapping', 'federationId');
         utl.Clbl.setActionResponse('getAuthUserDataFromCookieHeader', aud);
+        utl.Clbl.setActionResponse('insertLoginHistoryRecord', null);
+        
 
         // Setup the mock response
         utl.Mck.setResponse(200, JSON.serializePretty(new Map<String,String>{
@@ -97,13 +99,20 @@ private with sharing class SalesforceAuthProviderTest {
     @IsTest
     static void testRefresh(){
 
+        // Setup a mock response for the web service call
+        utl.Mck.setResponse('{}');
+        
+        // Setup the response from the callable action 
+        utl.Clbl.setActionResponse('insertLoginHistoryRecord', null);
+
         // Test the method
         Test.startTest();
         Auth.OAuthRefreshResult refreshResult = getAuthProvider().refresh(getAuthProviderConfig(),'[REFRESH_TOKEN]');
         Test.stopTest();
 
         // Assert test results
-        Assert.areEqual('NO_RF_TOKEN',    refreshResult.accessToken, 'Unexpected accessToken value');
+        Assert.areEqual('[REFRESH_TOKEN]', refreshResult.refreshToken, 'Unexpected accessToken value');
+        Assert.areEqual(null,              refreshResult.accessToken,  'Unexpected accessToken value');
     }
 
 
@@ -113,6 +122,9 @@ private with sharing class SalesforceAuthProviderTest {
     @IsTest
     static void testGetUserInfo(){
         
+        // Setup the response from the callable action 
+        utl.Clbl.setActionResponse('insertLoginHistoryRecord', null);
+
         // Setup the mock response
         utl.Mck.setResponse(200, JSON.serializePretty(new Map<String,String>{
             'access_token' => 'access_token_value',
@@ -161,6 +173,7 @@ private with sharing class SalesforceAuthProviderTest {
  
         // Setup the response from the callable action 
         utl.Clbl.setActionResponse('insertLog', null);
+        utl.Clbl.setActionResponse('insertLoginHistoryRecord', null);
 
         try{
             
@@ -237,7 +250,8 @@ private with sharing class SalesforceAuthProviderTest {
                 SalesforceAuthProvider.JWS_SIGNING_CERT_FIELD_NAME     => 'certName',
                 SalesforceAuthProvider.ENABLE_PER_USER_MODE_FIELD_NAME => 'false',
                 SalesforceAuthProvider.ENABLE_ERROR_LOGGING_FIELD_NAME => 'false',
-                SalesforceAuthProvider.ENABLE_LOGIN_LOGGING_FIELD_NAME => 'false'
+                SalesforceAuthProvider.ENABLE_LOGIN_LOGGING_FIELD_NAME => 'false',
+                SalesforceAuthProvider.ENABLE_LOGIN_HISTORY_FIELD_NAME => 'true'
             };
         }
         return authProviderConfig;
