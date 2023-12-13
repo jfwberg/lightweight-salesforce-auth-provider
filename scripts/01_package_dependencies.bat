@@ -8,8 +8,8 @@ rem Lightweight - REST Util@0.10.0-1
 call sf package install -p "04tP30000007sN3IAI" -w 30
 
 REM ----------------- OPTIONAL BUT ADVICED -----------------
-rem Lightweight - Auth Provider Util v2@0.8.0-1
-call sf package install -p "04tP3000000DieLIAS" -w 30
+rem Lightweight - Auth Provider Util v2@0.10.0-1
+call sf package install -p "04tP3000000ET0XIAW" -w 30
 
 
 REM --------------------------------------------------------
@@ -22,8 +22,8 @@ rem Lightweight - REST Util (Unlocked)@0.10.0-1
 sf package install -p "04tP30000007sQHIAY" -w 30
 
 REM ----------------- OPTIONAL BUT ADVICED -----------------
-rem Lightweight - Auth Provider Util v2 (Unlocked)@0.8.0-1
-sf package install -p "04tP3000000Dj5lIAC" -w 30
+rem Lightweight - Auth Provider Util v2 (Unlocked)@0.10.0-1
+sf package install -p "04tP3000000ET6zIAG" -w 30
 
 
 REM --------------------------------------------------------
@@ -31,5 +31,5 @@ REM                  ASSIGN PERMISSION SETS                -
 REM --------------------------------------------------------
 sf org assign permset --name "Lightweight_Apex_Unit_Test_Util_v2"
 sf org assign permset --name "Lightweight_REST_Util"
-sf org assign permset --name "Lightweight_Auth_Provider_Util_Admin"
+sf org assign permset --name "Lightweight_Auth_Provider_Util"
 sf org assign permset --name "Lightweight_Salesforce_Auth_Provider"

@@ -4,10 +4,10 @@
       "path": "force-app/package",
       "default": true,
       "package": "Lightweight - Salesforce Auth Provider",
-      "versionName": "v59.0 - 0.1",
-      "versionNumber": "0.1.0.NEXT",
+      "versionName": "v59.0 - 0.2",
+      "versionNumber": "0.2.0.NEXT",
       "versionDescription": "A lightweight Auth Provider to connect to external Salesforce through a Named Credentials or External Data Sources / External Objects / Cross Org Adapter.",
-      "ancestorId": "04tP30000007FvBIAU",
+      "ancestorVersion": "0.1.0",
       "dependencies": [
         {
           "package": "Lightweight - Apex Unit Test Util v2@2.3.0-1"
@@ -21,8 +21,8 @@
       "path": "force-app/package",
       "default": false,
       "package": "Lightweight - Salesforce Auth Provider (Unlocked)",
-      "versionName": "v59.0 - 0.1",
-      "versionNumber": "0.1.0.NEXT",
+      "versionName": "v59.0 - 0.2",
+      "versionNumber": "0.2.0.NEXT",
       "versionDescription": "A lightweight Auth Provider to connect to external Salesforce through a Named Credentials or External Data Sources / External Objects / Cross Org Adapter.",
       "dependencies": [
         {
@@ -46,6 +46,8 @@
     "Lightweight - Salesforce Auth Provider": "0HoP300000000KzKAI",
     "Lightweight - Salesforce Auth Provider@0.1.0-1": "04tP3000000DjXBIA0",
     "Lightweight - Salesforce Auth Provider (Unlocked)": "0HoP300000000MbKAI",
-    "Lightweight - Salesforce Auth Provider (Unlocked)@0.1.0-1": "04tP3000000DjaPIAS"
+    "Lightweight - Salesforce Auth Provider (Unlocked)@0.1.0-1": "04tP3000000DjaPIAS",
+    "Lightweight - Salesforce Auth Provider@0.2.0-1": "04tP3000000EardIAC",
+    "Lightweight - Salesforce Auth Provider (Unlocked)@0.2.0-1": "04tP3000000EawTIAS"
   }
 }

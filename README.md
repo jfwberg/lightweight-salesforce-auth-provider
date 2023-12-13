@@ -22,25 +22,24 @@ If you use the *managed package* you need to installed the managed package depen
 |Unlocked Installation URL| */packaging/installPackage.apexp?p0=04tP30000007sQHIAY*
 |GIT URL                  | https://github.com/jfwberg/lightweight-rest-util
 
-
 ## Optional Dependencies
 This package has an extension that adds a basic (error) logging functionality and a user mapping utility that allows the Auth Provider to work in a user context using "Per User" instead of "Named Principal".
 
 | Info | Value |
 |---|---|
 |Name|Lightweight - Auth Provider Util v2|
-|Version|0.8.0-1|
-|Managed Installation URL | */packaging/installPackage.apexp?p0=04tP3000000DieLIAS*
-|Unlocked Installation URL| */packaging/installPackage.apexp?p0=04tP3000000Dj5lIAC*
+|Version|0.10.0-1|
+|Managed Installation URL | */packaging/installPackage.apexp?p0=04tP3000000ET0XIAW*
+|Unlocked Installation URL| */packaging/installPackage.apexp?p0=04tP3000000ET6zIAG*
 |GIT URL                  | https://github.com/jfwberg/lightweight-auth-provider-util
 
 ## Package info
 | Info | Value |
 |---|---|
 |Name|Lightweight - Salesforce Auth Provider|
-|Version|0.1.0-1|
-|Managed Installation URL | */packaging/installPackage.apexp?p0=04tP3000000DjXBIA0*
-|Unlocked Installation URL| */packaging/installPackage.apexp?p0=04tP3000000DjaPIAS*
+|Version|0.2.0-1|
+|Managed Installation URL | */packaging/installPackage.apexp?p0=04tP3000000EardIAC*
+|Unlocked Installation URL| */packaging/installPackage.apexp?p0=04tP3000000EawTIAS*
 
 ## Important
 - Security is no easy subject: Before implementing this (or any) solution, always validate what you're doing with a certified sercurity expert and your certified implementation partner

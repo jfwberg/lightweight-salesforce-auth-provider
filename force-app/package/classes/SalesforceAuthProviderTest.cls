@@ -6,14 +6,59 @@
  * @description Class for testing the SalesforceAuthProvider Methods
  */
 @IsTest
-private with sharing class SalesforceAuthProviderTest {
+private with sharing class SalesforceAuthProviderTest{
     
     /** **************************************************************************************************** **
-     **                                      PRIVATE TEST DATA VARIABLE                                      **
+     **                                        PRIVATE TEST CONSTANTS                                        **
      ** **************************************************************************************************** **/
+     // User for the running the tests
+    private static final User FIRST_USER  = utl.Tst.createRunAsUser(utl.Tst.MINIMUM_ACCESS_PROFILE, 'Lightweight_Salesforce_Auth_Provider');
+    private static final User SECOND_USER = utl.Tst.createRunAsUser(utl.Tst.MINIMUM_ACCESS_PROFILE, 'Lightweight_Salesforce_Auth_Provider');
+
+    
+    /** **************************************************************************************************** **
+     **                                      PRIVATE TEST DATA VARIABLES                                     **
+     ** **************************************************************************************************** **/    
     // Variables for holding test data
+    private static String                 authProviderName = 'myAuthProvider';
     private static SalesforceAuthProvider authProvider;
-    private static Map<String,String> authProviderConfig; 
+    private static Map<String,String>     authProviderConfig; 
+
+    /**
+     * @description Method to Override the user config and enable "per user" mode
+     */
+    static void setPerUserConfiguration(){
+        // Update Config
+        getAuthProviderConfig().put(SalesforceAuthProvider.ENABLE_PER_USER_MODE_FIELD_NAME, 'true');
+        getAuthProviderConfig().put(SalesforceAuthProvider.ENABLE_LOGIN_LOGGING_FIELD_NAME, 'true');
+        getAuthProviderConfig().put(SalesforceAuthProvider.ENABLE_ERROR_LOGGING_FIELD_NAME, 'true');
+        
+        // Setup the response from the callable action
+        utl.Clbl.setActionResponse('updateMappingLoginDetails', null);
+        utl.Clbl.setActionResponse('checkUserMappingExists',    true);
+        utl.Clbl.setActionResponse('insertLoginHistoryRecord',  null);
+        utl.Clbl.setActionResponse('insertLog',                 null);
+    }
+
+
+    /**
+     * @description Method to get auth user data
+     */
+    static Auth.UserData getAuthUserData(){
+        return new Auth.UserData(
+            UserInfo.getUserId(),
+            UserInfo.getFirstName(),
+            UserInfo.getLastName(), 
+            UserInfo.getFirstName() + ' ' + UserInfo.getLastName(),
+            UserInfo.getUserEmail(),
+            'link',             
+            UserInfo.getUserName(),
+            null,               // Locale
+            null,               // Provider
+            null,               // Site login
+            null                // Attribute map
+        );
+    }
 
 
     /** **************************************************************************************************** **
@@ -38,43 +83,18 @@ private with sharing class SalesforceAuthProviderTest {
         );
     }
 
-
     /**
      * @description Method to test the handleCallback() function
      */
     @IsTest
     static void testHandleCallback(){
+
+        // Value to assert
+        Auth.AuthProviderTokenResponse tokenResponse;
+
+        // Setup callable action 
+        utl.Clbl.setActionResponse('insertLoginHistoryRecord',  null);
         
-        // Run once so it is initialized
-        getAuthProviderConfig();
-
-        // Create a Mock User Data object
-        Auth.UserData aud = new Auth.UserData(
-            'IntegrationUserId',// User Id
-            'Integration',      // First Name
-            'User',             // Last Name
-            'Integration User', // Full Name
-            'integration.user@example.com.invalid', // Email Address
-            'link',             // Link
-            null,               // Username
-            null,               // Locale
-            null,               // Provider
-            null,               // Site login
-            null                // Attribute map
-        );
-
-        // Override the user config and enable per user mode to "test" the callable methods
-        authProviderConfig.put(SalesforceAuthProvider.ENABLE_PER_USER_MODE_FIELD_NAME, 'true');
-        authProviderConfig.put(SalesforceAuthProvider.ENABLE_LOGIN_LOGGING_FIELD_NAME, 'true');
-
-        // Setup the response from the callable action
-        utl.Clbl.setActionResponse('updateMappingLoginDetails', null);
-        utl.Clbl.setActionResponse('checkUserMappingExists', true);
-        utl.Clbl.setActionResponse('getSubjectFromUserMapping', 'federationId');
-        utl.Clbl.setActionResponse('getAuthUserDataFromCookieHeader', aud);
-        utl.Clbl.setActionResponse('insertLoginHistoryRecord', null);
-        
-
         // Setup the mock response
         utl.Mck.setResponse(200, JSON.serializePretty(new Map<String,String>{
             'access_token' => 'access_token_value',
@@ -82,9 +102,11 @@ private with sharing class SalesforceAuthProviderTest {
             'expires_in'   => '1682439225'
         }));
 
-        // Test the method
+        // Run the test
         Test.startTest();
-        Auth.AuthProviderTokenResponse tokenResponse = getTokenResponse();
+        System.runAs(FIRST_USER){
+            tokenResponse = getTokenResponse();
+        }
         Test.stopTest();
 
         // Assert test results
@@ -94,13 +116,78 @@ private with sharing class SalesforceAuthProviderTest {
 
 
     /**
+     * @description Method to test the handleCallback() function
+     */
+    @IsTest
+    static void testHandleCallbackAsUser(){
+
+        // Variables to assert
+        String fuLoggedInUserId;
+        String suLoggedInUserId;
+
+        Auth.AuthProviderTokenResponse fuTokenResponse;
+        Auth.AuthProviderTokenResponse suTokenResponse;
+        
+        // Set per user config
+        setPerUserConfiguration();
+       
+        // Setup the mock response
+        utl.Mck.setResponse(200, JSON.serializePretty(new Map<String,String>{
+            'access_token' => 'access_token_value',
+            'token_type'   => 'Bearer',
+            'expires_in'   => '1682439225'
+        }));
+
+        // Run the test
+        Test.startTest();
+        System.runAs(FIRST_USER){
+            // Test specific responses
+            utl.Clbl.setActionResponse('getSubjectFromUserMapping',       'FIRST_USER');
+            utl.Clbl.setActionResponse('getAuthUserDataFromCookieHeader', getAuthUserData());
+
+            // Execute logic
+            fuTokenResponse = getTokenResponse();
+
+            // Set the logged in user for checking
+            fuLoggedInUserId = getAuthProvider().loggedInUserId;
+        }
+
+        System.runAs(SECOND_USER){
+            // Test specific responses
+            utl.Clbl.setActionResponse('getSubjectFromUserMapping',       'SECOND_USER');
+            utl.Clbl.setActionResponse('getAuthUserDataFromCookieHeader', getAuthUserData());
+
+            // Execute logic
+            suTokenResponse = getTokenResponse();
+
+            // Set the logged in user for checking
+            suLoggedInUserId = getAuthProvider().loggedInUserId;
+        }
+        Test.stopTest();
+
+
+        // Assert test results
+        Assert.areEqual('access_token_value', fuTokenResponse.oauthToken, 'Unexpected oauthToken value');
+        Assert.areEqual('TestState',          fuTokenResponse.state     , 'Unexpected state value');
+
+        // Assert test results
+        Assert.areEqual('access_token_value', suTokenResponse.oauthToken, 'Unexpected oauthToken value');
+        Assert.areEqual('TestState',          suTokenResponse.state     , 'Unexpected state value');
+    }
+
+
+    /**
      * @description Method to test the refresh() function
      */
     @IsTest
     static void testRefresh(){
 
-        // Setup a mock response for the web service call
-        utl.Mck.setResponse('{}');
+         // Setup the mock response
+         utl.Mck.setResponse(200, JSON.serializePretty(new Map<String,String>{
+            'access_token' => 'access_token_value',
+            'token_type'   => 'Bearer',
+            'expires_in'   => '1682439225'
+        }));
         
         // Setup the response from the callable action 
         utl.Clbl.setActionResponse('insertLoginHistoryRecord', null);
@@ -111,8 +198,70 @@ private with sharing class SalesforceAuthProviderTest {
         Test.stopTest();
 
         // Assert test results
-        Assert.areEqual('[REFRESH_TOKEN]', refreshResult.refreshToken, 'Unexpected accessToken value');
-        Assert.areEqual(null,              refreshResult.accessToken,  'Unexpected accessToken value');
+        Assert.areEqual('[REFRESH_TOKEN]',      refreshResult.refreshToken, 'Unexpected refreshToken value');
+        Assert.areEqual('access_token_value',   refreshResult.accessToken,  'Unexpected accessToken value');
+    }
+
+
+    /**
+     * @description Method to test the refresh() function in user mode
+     */
+    @IsTest
+    static void testRefreshAsUser(){
+
+        // Variables to assert
+        String fuLoggedInUserId;
+        String suLoggedInUserId;
+
+        Auth.OAuthRefreshResult fuRefreshResult;
+        Auth.OAuthRefreshResult suRefreshResult;
+        
+        // Set per user config
+        setPerUserConfiguration();
+
+        // Setup the mock response to return a token
+        utl.Mck.setResponse(200, JSON.serializePretty(new Map<String,String>{
+            'access_token' => 'access_token_value',
+            'token_type'   => 'Bearer',
+            'expires_in'   => '1682439225'
+        }));
+ 
+        // Run the test
+        Test.startTest();
+        System.runAs(FIRST_USER){
+            // Test specific responses
+            utl.Clbl.setActionResponse('getSubjectFromUserMapping',       'FIRST_USER');
+            utl.Clbl.setActionResponse('getAuthUserDataFromCookieHeader', getAuthUserData());
+
+            // Execute logic
+            fuRefreshResult = getAuthProvider().refresh(getAuthProviderConfig(), FIRST_USER.Id);
+
+            // Set the logged in user for checking
+            fuLoggedInUserId = getAuthProvider().loggedInUserId;
+        }
+
+        System.runAs(SECOND_USER){
+            // Test specific responses
+            utl.Clbl.setActionResponse('getSubjectFromUserMapping',       'SECOND_USER');
+            utl.Clbl.setActionResponse('getAuthUserDataFromCookieHeader', getAuthUserData());
+
+            // Execute logic
+            suRefreshResult = getAuthProvider().refresh(getAuthProviderConfig(), SECOND_USER.Id);
+
+            // Set the logged in user for checking
+            suLoggedInUserId = getAuthProvider().loggedInUserId;
+        }
+        Test.stopTest();
+
+        // Assert test results for the first user
+        Assert.areEqual(FIRST_USER.Id,        fuLoggedInUserId,             'Unexpected logged in user');
+        Assert.areEqual(FIRST_USER.Id,        fuRefreshResult.refreshToken, 'Unexpected refreshToken value');
+        Assert.areEqual('access_token_value', fuRefreshResult.accessToken,  'Unexpected accessToken value');
+
+        // Assert test results for the second user
+        Assert.areEqual(SECOND_USER.Id,       suLoggedInUserId,             'Unexpected logged in user');
+        Assert.areEqual(SECOND_USER.Id,       suRefreshResult.refreshToken, 'Unexpected refreshToken value');
+        Assert.areEqual('access_token_value', suRefreshResult.accessToken,  'Unexpected accessToken value');
     }
 
 
@@ -141,7 +290,7 @@ private with sharing class SalesforceAuthProviderTest {
         Test.stopTest();
 
         // Assert test results
-        Assert.areEqual('integration.user@example.com.invalid',    userData.email, 'Unexpected email value');
+        Assert.areEqual(UserInfo.getUserEmail(),  userData.email, 'Unexpected email value');
     }
 
 
@@ -164,21 +313,18 @@ private with sharing class SalesforceAuthProviderTest {
      */
     @IsTest
     static void testHandleException(){
-        
-        // Run once so it is initialized
-        getAuthProviderConfig();
-
+    
         // Override the user config and enable error logging to "test" the callable methods
-        authProviderConfig.put(SalesforceAuthProvider.ENABLE_ERROR_LOGGING_FIELD_NAME, 'true');
+        getAuthProviderConfig().put(SalesforceAuthProvider.ENABLE_ERROR_LOGGING_FIELD_NAME, 'true');
  
         // Setup the response from the callable action 
         utl.Clbl.setActionResponse('insertLog', null);
         utl.Clbl.setActionResponse('insertLoginHistoryRecord', null);
 
         try{
-            
+            SalesforceAuthProvider sap = new SalesforceAuthProvider();
             // Try to handle the exception
-            SalesforceAuthProvider.handleException(
+            sap.handleException(
                 new SalesforceAuthProvider.GenericException('Message'),
                 getAuthProviderConfig()
             );

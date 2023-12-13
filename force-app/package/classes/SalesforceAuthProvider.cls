@@ -14,17 +14,33 @@ public with sharing class SalesforceAuthProvider extends Auth.AuthProviderPlugin
     /** **************************************************************************************************** **
      **                                          PRIVATE VARIABLES                                           **
      ** **************************************************************************************************** **/
-    // The details of the logged in user
-    private static String        loggedInUserId;
-    private static Auth.UserData loggedInUserData;
+    // For debugging purposes extract the callout data
+    private utl.Rst sfTokenCallout;
 
+    // The optional auth provider util for error logging and per user principal (requires the "Lightweight - Auth Provider Util v2" package)
+    // If you dont want this depencency, disable the options "Enable Error Logging", "Enabled Per user principal" and "Enabled Per User Login Logging" in the Custom Auth Provider Setup.
+    private  Callable authProviderUtil;
+
+    // The details of the logged in user
+    @TestVisible private String        loggedInUserId   = UserInfo.getUserId();
+    @TestVisible private Auth.UserData loggedInUserData = new Auth.UserData(
+         UserInfo.getUserId(),    // User Id
+         UserInfo.getFirstName(), // First Name
+         UserInfo.getLastName(),  // Last Name
+         UserInfo.getFirstName() + ' ' +  UserInfo.getLastName(), // Full Name (user name here)
+         UserInfo.getUserEmail(), // Email Address
+         null,                    // Link
+         UserInfo.getUserName(),  // Username
+         UserInfo.getLocale(),    // Locale
+         null,                    // Provider
+         null,                    // Site login
+         null                     // Attribute map
+     );
+
+    
     /** **************************************************************************************************** **
      **                                          PRIVATE CONSTANTS                                           **
      ** **************************************************************************************************** **/
-    // The optional auth provider util for error logging and per user principal (requires the "Lightweight - Auth Provider Util v2" package)
-    // If you dont want this depencency, disable the options "Enable Error Logging", "Enabled Per user principal" and "Enabled Per User Login Logging" in the Custom Auth Provider Setup.
-    private static Callable authProviderUtil;
-
     // Grant details
     @TestVisible private final static String MY_DOMAIN_FIELD_NAME  = String.valueOf(SalesforceAuthProvider__mdt.My_Domain_URL__c);
     @TestVisible private final static String IS_SANDBOX_FIELD_NAME = String.valueOf(SalesforceAuthProvider__mdt.Is_Sandbox__c);
@@ -113,16 +129,20 @@ public with sharing class SalesforceAuthProvider extends Auth.AuthProviderPlugin
             // Retrieve a new token from the token endpoint
             TokenResponse sfTokenResponse = this.retrieveSalesforceToken(authProviderConfiguration);
 
-            // If login history is enabled, create a login history entry
-            if(Boolean.valueOf(authProviderConfiguration.get(ENABLE_LOGIN_HISTORY_FIELD_NAME))){
-                getAuthProviderUtil().call('insertLoginHistoryRecord', new Map<String, Object> { 
-                    'authProviderName' => authProviderConfiguration.get(AUTH_PROVIDER_NAME_FIELD_NAME)?.trim(),
-                    'userId'           => loggedInUserId,
-                    'flowType'         => 'Initial', // Initial or Refresh 
-                    'timestamp'        => Datetime.now()
-                });
-            }
+             // Manage the login history
+             this.handleInsertHistoryRecord(
+                authProviderConfiguration,
+                'Initial',
+                String.isNotBlank(sfTokenResponse.access_token),
+                'Salesforce',
+                this.sfTokenCallout
+            );
 
+            // Error with the token, purposely thrown here to manage proper error logging
+            if(String.isBlank(sfTokenResponse.access_token)){
+                throw new TokenException(String.format(INVALID_TOKEN_RESPONSE_MSG, new String[]{sfTokenCallout.getResponse().getBody()}));
+            }
+           
             // In the per user authorization we need to abuse the user id as refresh token so that
             // a new token can be retrieved in the correct user context
             return new Auth.AuthProviderTokenResponse(
@@ -161,16 +181,31 @@ public with sharing class SalesforceAuthProvider extends Auth.AuthProviderPlugin
             // Retrieve a new token from the token endpoint
             TokenResponse sfTokenResponse = this.retrieveSalesforceToken(authProviderConfiguration);
 
-            // If login history is enabled, create a login history entry
-            if(Boolean.valueOf(authProviderConfiguration.get(ENABLE_LOGIN_HISTORY_FIELD_NAME))){
-                getAuthProviderUtil().call('insertLoginHistoryRecord', new Map<String, Object> { 
+            // Manage the login history
+            this.handleInsertHistoryRecord(
+                authProviderConfiguration,
+                'Refresh',
+                String.isNotBlank(sfTokenResponse.access_token),
+                'Salesforce',
+                this.sfTokenCallout
+            );
+            
+            // Check if the per user principal is enabled, if so update the log entry for that user mapping
+            if( Boolean.valueOf(authProviderConfiguration.get(ENABLE_PER_USER_MODE_FIELD_NAME)) &&
+                Boolean.valueOf(authProviderConfiguration.get(ENABLE_LOGIN_LOGGING_FIELD_NAME))){
+                
+                // Update the mapping record    
+                getAuthProviderUtil().call('updateMappingLoginDetails', new Map<String, Object> { 
                     'authProviderName' => authProviderConfiguration.get(AUTH_PROVIDER_NAME_FIELD_NAME)?.trim(),
-                    'userId'           => loggedInUserId,
-                    'flowType'         => 'Refresh',
-                    'timestamp'        => Datetime.now()
+                    'userId'           => loggedInUserId
                 });
             }
-            
+
+            // Error with the token, purposely thrown here to manage proper error logging
+            if(String.isBlank(sfTokenResponse.access_token)){
+                throw new TokenException(String.format(INVALID_TOKEN_RESPONSE_MSG, new String[]{sfTokenCallout.getResponse().getBody()}));
+            }
+
             // Create a new refresh token
             return new Auth.OAuthRefreshResult(
                 sfTokenResponse.access_token,
@@ -202,19 +237,7 @@ public with sharing class SalesforceAuthProvider extends Auth.AuthProviderPlugin
      *              integration user.
      */
     public Auth.UserData getUserInfo(Map<string,string> authProviderConfiguration, Auth.AuthProviderTokenResponse response) {
-        return (loggedInUserData != null) ? loggedInUserData : new Auth.UserData(
-            'IntegrationUserId',// User Id
-            'Integration',      // First Name
-            'User',             // Last Name
-            'Integration User', // Full Name
-            'integration.user@example.com.invalid', // Email Address
-            'link',             // Link
-            null,               // Username
-            null,               // Locale
-            null,               // Provider
-            null,               // Site login
-            null                // Attribute map
-        );
+        return this.loggedInUserData;
     }
 
 
@@ -271,21 +294,9 @@ public with sharing class SalesforceAuthProvider extends Auth.AuthProviderPlugin
      * @throws      TokenException            There is an error in parsing the token response
      */
     private TokenResponse retrieveSalesforceToken(Map<String,String> authProviderConfiguration){
-        
-        // Check if the per user principal is enabled, if so update the log entry for that user mapping
-        if( Boolean.valueOf(authProviderConfiguration.get(ENABLE_PER_USER_MODE_FIELD_NAME)) &&
-            Boolean.valueOf(authProviderConfiguration.get(ENABLE_LOGIN_LOGGING_FIELD_NAME))){
-            
-            // Update the mapping record    
-            getAuthProviderUtil().call('updateMappingLoginDetails', new Map<String, Object> { 
-                'authProviderName' => authProviderConfiguration.get(AUTH_PROVIDER_NAME_FIELD_NAME)?.trim(),
-                'userId'           => loggedInUserId
-            });
-        }
 
         // Call SF token endpoint
-        return this.parseTokenResponse(new utl.Rst()
-            .setHandleSfResponse(true)
+        this.sfTokenCallout = new utl.Rst()
             .setEndpoint(authProviderConfiguration.get(MY_DOMAIN_FIELD_NAME) + '/services/oauth2/token')
             .setContentTypeHeaderToFormUrlEncoded(
                 new Map<String,String>{
@@ -293,10 +304,10 @@ public with sharing class SalesforceAuthProvider extends Auth.AuthProviderPlugin
                     'assertion'  => this.generateJWS(authProviderConfiguration)
                 }
             )
-            .call()
-            .getResponse()
-            .getBody()
-        );
+            .call();
+            
+        // Parse the response into a token response
+        return this.parseTokenResponse(this.sfTokenCallout.getResponse().getBody());
     }
 
 
@@ -381,7 +392,7 @@ public with sharing class SalesforceAuthProvider extends Auth.AuthProviderPlugin
      * @throws      GenericException          Always
      */
     @TestVisible
-    private static void handleException(Exception e, Map<String,String> authProviderConfiguration){
+    private void handleException(Exception e, Map<String,String> authProviderConfiguration){
         
         // Generate a generic exception message for the error handling and to be thrown to the user
         String exceptionMessage = String.format(GENERIC_EXCEPTION_MSG, new String[]{e.getTypeName(), e.getMessage()});
@@ -393,7 +404,7 @@ public with sharing class SalesforceAuthProvider extends Auth.AuthProviderPlugin
             
             getAuthProviderUtil().call('insertLog', new Map<String, Object> { 
                 'authProviderName' => authProviderConfiguration.get(AUTH_PROVIDER_NAME_FIELD_NAME)?.trim(),
-                'userId'           => String.isNotBlank(loggedInUserId) ? loggedInUserId : UserInfo.getUserId(),
+                'userId'           => this.loggedInUserId,
                 'logId'            => GUID,
                 'message'          => exceptionMessage
             });
@@ -414,7 +425,7 @@ public with sharing class SalesforceAuthProvider extends Auth.AuthProviderPlugin
      *                                        type.
      * @return      The subject that will be part of the JWT sub parameter
      */
-    private static String getSubject(Map<String,String> authProviderConfiguration){
+    private String getSubject(Map<String,String> authProviderConfiguration){
         
         // Check if the per user principal is enabled
         if(Boolean.valueOf(authProviderConfiguration.get(ENABLE_PER_USER_MODE_FIELD_NAME))){
@@ -422,12 +433,12 @@ public with sharing class SalesforceAuthProvider extends Auth.AuthProviderPlugin
             // If no user mapping exists throw an error
             if(! (Boolean) getAuthProviderUtil().call('checkUserMappingExists', new Map<String, Object> { 
                 'authProviderName' => authProviderConfiguration.get(AUTH_PROVIDER_NAME_FIELD_NAME)?.trim(),
-                'userId'           => loggedInUserId
+                'userId'           => this.loggedInUserId
             })){
                 throw new SubjectException(
                     String.format(
                         NO_USER_MAPPING_MSG,
-                        new String[]{authProviderConfiguration.get(AUTH_PROVIDER_NAME_FIELD_NAME), loggedInUserId}
+                        new String[]{authProviderConfiguration.get(AUTH_PROVIDER_NAME_FIELD_NAME), this.loggedInUserId}
                     )
                 );
             }
@@ -435,7 +446,7 @@ public with sharing class SalesforceAuthProvider extends Auth.AuthProviderPlugin
             // Return the subject from the user mapping record related to this user and auth provider
             return (String) getAuthProviderUtil().call('getSubjectFromUserMapping', new Map<String, Object> { 
                 'authProviderName' => authProviderConfiguration.get(AUTH_PROVIDER_NAME_FIELD_NAME)?.trim(),
-                'userId'           => loggedInUserId
+                'userId'           => this.loggedInUserId
             });
         }
         
@@ -468,22 +479,51 @@ public with sharing class SalesforceAuthProvider extends Auth.AuthProviderPlugin
      * @throws      GenericException The lwt.AuthProviderUtil class does not exist.
      */
     @TestVisible
-    private static Callable getAuthProviderUtil(){
-        if(authProviderUtil == null){
+    private Callable getAuthProviderUtil(){
+        if(this.authProviderUtil == null){
             
             // Allow for testing a callable method
             if(Test.isRunningTest()){return (Callable) utl.Clbl.getInstance();}
             
             // Dymaically instatiate class 
-            authProviderUtil = (Callable) Type.forName('lwt.AuthProviderUtil')?.newInstance();
+            this.authProviderUtil = (Callable) Type.forName('lwt.AuthProviderUtil')?.newInstance();
             
             // Throw an error if the package is not installed
             // Add Test check here so the test does not fail in case the package is installed
-            if(authProviderUtil == null){
+            if(this.authProviderUtil == null){
                 throw new GenericException(MISSING_UTIL_PACKAGE_MSG);
             }
         }
-        return authProviderUtil;
+        return this.authProviderUtil;
+    }
+
+
+    /**
+     * @description Method that generates the JWT, JWS and HTTP Request to retrieve an access token
+     *              from the configured token endpoint.
+     * @param       authProviderConfiguration The configuration items for the custom authentication
+     *                                        provider that have been configured in the custom metadata
+     *                                        type.
+     * @param       flowType                  The type of login flow (Initial or Refresh)
+     * @param       success                   Inidcator if the login was successful or not
+     * @param       providerType              Optional description of the provider. This is handy when you
+     *                                        have chained callouts.
+     * @param       callout                   The callout details for error logging
+     */
+    @SuppressWarnings('PMD.ExcessiveParameterList')
+    private void handleInsertHistoryRecord(Map<String,String> authProviderConfiguration, String flowType, Boolean success, String providerType, utl.Rst callout){
+        // If login history is enabled, create a login history entry
+        if(Boolean.valueOf(authProviderConfiguration.get(ENABLE_LOGIN_HISTORY_FIELD_NAME))){
+            getAuthProviderUtil().call('insertLoginHistoryRecord', new Map<String, Object> { 
+                'authProviderName' => authProviderConfiguration.get(AUTH_PROVIDER_NAME_FIELD_NAME)?.trim(),
+                'userId'           => loggedInUserId,
+                'flowType'         => flowType,
+                'timestamp'        => Datetime.now(),
+                'success'          => success,
+                'providerType'     => providerType,
+                'loginInfo'        => success ? null : callout?.getResponse()?.getBody()
+            });
+        }
     }
 
 
