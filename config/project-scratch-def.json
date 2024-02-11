@@ -1,6 +1,6 @@
 {
 	"orgName": "Lightweight - Salesforce Auth Provider - Scratch Org",
-	"edition": "Developer",
+	"edition": "Enterprise",
 	"features": [
 		"EnableSetPasswordInApi",
         "PersonAccounts",

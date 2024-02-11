@@ -35,7 +35,7 @@ public with sharing class SalesforceAuthProvider extends Auth.AuthProviderPlugin
          null,                    // Provider
          null,                    // Site login
          null                     // Attribute map
-     );
+    );
 
     
     /** **************************************************************************************************** **
@@ -129,14 +129,25 @@ public with sharing class SalesforceAuthProvider extends Auth.AuthProviderPlugin
             // Retrieve a new token from the token endpoint
             TokenResponse sfTokenResponse = this.retrieveSalesforceToken(authProviderConfiguration);
 
-             // Manage the login history
-             this.handleInsertHistoryRecord(
+            // Manage the login history
+            this.handleInsertHistoryRecord(
                 authProviderConfiguration,
                 'Initial',
                 String.isNotBlank(sfTokenResponse.access_token),
                 'Salesforce',
                 this.sfTokenCallout
             );
+
+            // Check if the per user principal is enabled, if so update the log entry for that user mapping
+            if( Boolean.valueOf(authProviderConfiguration.get(ENABLE_PER_USER_MODE_FIELD_NAME)) &&
+                Boolean.valueOf(authProviderConfiguration.get(ENABLE_LOGIN_LOGGING_FIELD_NAME))){
+                
+                // Update the mapping record    
+                getAuthProviderUtil().call('updateMappingLoginDetails', new Map<String, Object> { 
+                    'authProviderName' => authProviderConfiguration.get(AUTH_PROVIDER_NAME_FIELD_NAME)?.trim(),
+                    'userId'           => loggedInUserId
+                });
+            }
 
             // Error with the token, purposely thrown here to manage proper error logging
             if(String.isBlank(sfTokenResponse.access_token)){
@@ -203,7 +214,7 @@ public with sharing class SalesforceAuthProvider extends Auth.AuthProviderPlugin
 
             // Error with the token, purposely thrown here to manage proper error logging
             if(String.isBlank(sfTokenResponse.access_token)){
-                throw new TokenException(String.format(INVALID_TOKEN_RESPONSE_MSG, new String[]{sfTokenCallout.getResponse().getBody()}));
+                throw new TokenException(String.format(INVALID_TOKEN_RESPONSE_MSG, new String[]{this.sfTokenCallout.getResponse().getBody()}));
             }
 
             // Create a new refresh token

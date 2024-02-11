@@ -4,16 +4,16 @@
       "path": "force-app/package",
       "default": true,
       "package": "Lightweight - Salesforce Auth Provider",
-      "versionName": "v59.0 - 0.2",
-      "versionNumber": "0.2.0.NEXT",
+      "versionName": "v60.0 - 0.3",
+      "versionNumber": "0.3.0.NEXT",
       "versionDescription": "A lightweight Auth Provider to connect to external Salesforce through a Named Credentials or External Data Sources / External Objects / Cross Org Adapter.",
-      "ancestorVersion": "0.1.0",
+      "ancestorVersion": "0.2.0",
       "dependencies": [
         {
-          "package": "Lightweight - Apex Unit Test Util v2@2.3.0-1"
+          "package": "Lightweight - Apex Unit Test Util v2@2.4.0-1"
         },
         {
-          "package": "Lightweight - REST Util@0.10.0-1"
+          "package": "Lightweight - REST Util@0.11.0-1"
         }
       ]
     },
@@ -21,15 +21,15 @@
       "path": "force-app/package",
       "default": false,
       "package": "Lightweight - Salesforce Auth Provider (Unlocked)",
-      "versionName": "v59.0 - 0.2",
-      "versionNumber": "0.2.0.NEXT",
+      "versionName": "v60.0 - 0.3",
+      "versionNumber": "0.3.0.NEXT",
       "versionDescription": "A lightweight Auth Provider to connect to external Salesforce through a Named Credentials or External Data Sources / External Objects / Cross Org Adapter.",
       "dependencies": [
         {
-          "package": "Lightweight - Apex Unit Test Util v2 (Unlocked)@2.3.0-1"
+          "package": "Lightweight - Apex Unit Test Util v2 (Unlocked)@2.4.0-1"
         },
         {
-          "package": "Lightweight - REST Util (Unlocked)@0.10.0-1"
+          "package": "Lightweight - REST Util (Unlocked)@0.11.0-1"
         }
       ]
     }
@@ -37,17 +37,19 @@
   "name": "lightweight-salesforce-auth-provider",
   "namespace": "lwt",
   "sfdcLoginUrl": "https://login.salesforce.com",
-  "sourceApiVersion": "59.0",
+  "sourceApiVersion": "60.0",
   "packageAliases": {
-    "Lightweight - Apex Unit Test Util v2@2.3.0-1": "04tP30000007oePIAQ",
-    "Lightweight - Apex Unit Test Util v2 (Unlocked)@2.3.0-1": "04tP30000007og1IAA",
-    "Lightweight - REST Util@0.10.0-1": "04tP30000007sN3IAI",
-    "Lightweight - REST Util (Unlocked)@0.10.0-1": "04tP30000007sQHIAY",
+    "Lightweight - Apex Unit Test Util v2@2.4.0-1": "04tP3000000M6OXIA0",
+    "Lightweight - Apex Unit Test Util v2 (Unlocked)@2.4.0-1": "04tP3000000M6Q9IAK",
+    "Lightweight - REST Util@0.11.0-1": "04tP3000000M6gHIAS",
+    "Lightweight - REST Util (Unlocked)@0.11.0-1": "04tP3000000M6htIAC",
     "Lightweight - Salesforce Auth Provider": "0HoP300000000KzKAI",
     "Lightweight - Salesforce Auth Provider@0.1.0-1": "04tP3000000DjXBIA0",
     "Lightweight - Salesforce Auth Provider (Unlocked)": "0HoP300000000MbKAI",
     "Lightweight - Salesforce Auth Provider (Unlocked)@0.1.0-1": "04tP3000000DjaPIAS",
     "Lightweight - Salesforce Auth Provider@0.2.0-1": "04tP3000000EardIAC",
-    "Lightweight - Salesforce Auth Provider (Unlocked)@0.2.0-1": "04tP3000000EawTIAS"
+    "Lightweight - Salesforce Auth Provider (Unlocked)@0.2.0-1": "04tP3000000EawTIAS",
+    "Lightweight - Salesforce Auth Provider@0.3.0-1": "04tP3000000MCLtIAO",
+    "Lightweight - Salesforce Auth Provider (Unlocked)@0.3.0-1": "04tP3000000MCNVIA4"
   }
 }
