@@ -10,17 +10,18 @@ https://github.com/jfwberg/lightweight-auth-provider-util
 The following package need to be installed first before installing this package. (In this order)
 If you use the *managed package* you need to installed the managed package dependency and if you use the *unlocked version* you need to use the unlocked dependency.
 | Info | Value |
+|---|---|
 |Name|Lightweight - Apex Unit Test Util v2|
 |Version|2.4.0-1|
-|Managed Installation URL | */packaging/installPackage.apexp?p0=04tP3000000M6OXIA0*
-|Unlocked Installation URL| */packaging/installPackage.apexp?p0=04tP3000000M6Q9IAK*
-|Github URL | https://github.com/jfwberg/lightweight-apex-unit-test-util-v2
+|Managed Installation URL | */packaging/installPackage.apexp?p0=04tP3000000M6OXIA0* |
+|Unlocked Installation URL| */packaging/installPackage.apexp?p0=04tP3000000M6Q9IAK* |
+|Github URL | https://github.com/jfwberg/lightweight-apex-unit-test-util-v2|
 | | |
 |Name|Lightweight - Apex REST Util|
 |Version|0.11.0-1|
-|Managed Installation URL | */packaging/installPackage.apexp?p0=04tP3000000M6gHIAS*
-|Unlocked Installation URL| */packaging/installPackage.apexp?p0=04tP3000000M6htIAC*
-|Github URL | https://github.com/jfwberg/lightweight-apex-rest-util 
+|Managed Installation URL | */packaging/installPackage.apexp?p0=04tP3000000M6gHIAS* |
+|Unlocked Installation URL| */packaging/installPackage.apexp?p0=04tP3000000M6htIAC* |
+|Github URL | https://github.com/jfwberg/lightweight-apex-rest-util |
 
 ## Optional Dependencies
 This package has an extension that adds a basic (error) logging functionality and a user mapping utility that allows the Auth Provider to work in a user context using "Per User" instead of "Named Principal".
